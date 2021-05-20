@@ -1,0 +1,34 @@
+CREATE OR REPLACE MODEL
+`elemental-alloy-308203.supermarket.kaj_clusters_7groups`
+OPTIONS(model_type='kmeans', num_clusters =7)
+AS (
+SELECT TOTAL_SPEND/NUMBER_OF_VISIT as SPEND_PER_VISIT, NUMBER_OF_PRODUCT/NUMBER_OF_VISIT as NO_PRODUCT_PER_VISIT,AVG_DAYBTW_PURCHASE ,DAYS_SINCE_LAST_PURCHASE
+FROM(
+        SELECT
+            CUST_CODE,
+            COUNT(DISTINCT BASKET_ID) AS NUMBER_OF_VISIT,
+            SUM(SPEND) AS TOTAL_SPEND,
+            COUNT(DISTINCT PROD_CODE) AS NUMBER_OF_PRODUCT,
+            SUM(QUANTITY) as NUMBER_OF_UNIT,
+            COUNT(DISTINCT SHOP_WEEK) as NUMBER_OF_WEEK
+            FROM `elemental-alloy-308203.supermarket.supermarket`
+            WHERE CUST_CODE IS NOT NULL
+            GROUP BY CUST_CODE) t1
+        left join(
+            select CUST_CODE,date_diff(PARSE_DATE('%Y%m%d', CAST('20080706' AS STRING)),max(PARSE_DATE('%Y%m%d', CAST(SHOP_DATE AS STRING))),day) as DAYS_SINCE_LAST_PURCHASE
+            from `elemental-alloy-308203.supermarket.supermarket`
+            where CUST_CODE is not null
+            group by CUST_CODE) t2
+            on t1.CUST_CODE = t2.CUST_CODE
+        left join(
+            select CUST_CODE, ROUND(avg(DAY_BTW_PURCHASE)) AVG_DAYBTW_PURCHASE
+            from(
+                    select CUST_CODE,SHOPDATE,lag(SHOPDATE) over (partition by CUST_CODE order by SHOPDATE asc ),date_diff(SHOPDATE,lag(SHOPDATE) over (partition by CUST_CODE order by SHOPDATE asc ),day) DAY_BTW_PURCHASE
+                    from(
+                            select distinct CUST_CODE,PARSE_DATE('%Y%m%d', CAST((SHOP_DATE) AS STRING)) as SHOPDATE
+                            from `elemental-alloy-308203.supermarket.supermarket`
+                            where CUST_CODE is not null)
+                        )
+            where DAY_BTW_PURCHASE is not null
+            group by CUST_CODE) t3
+            on t1.CUST_CODE=t3.CUST_CODE)

@@ -1,0 +1,43 @@
+--Customer Movement Analysis
+select *,case when ThisMonth is null then 'Churn'
+              when (ThisMonth is not null) and (PrevMonth is not null) then 'Repeat'
+              when (ThisMonth is not null) and (PrevMonth is null) and (Prev2Month is not null) then 'Reactivated'
+              when (ThisMonth is not null) and (PrevMonth is null) and (Prev2Month is null) then 'New' end Status
+from(
+    select cust_code,Month ThisMonth,lag(Month) over (partition by CUST_CODE order by Month asc ) PrevMonth, lag(Month,2) over (partition by CUST_CODE order by Month asc ) Prev2Month
+    from(
+        select distinct CUST_CODE,Month
+        from
+            (select CUST_CODE,DATE_TRUNC(PARSE_DATE('%Y%m%d', CAST(SHOP_DATE AS STRING)),Month) as Month,SHOP_DATE
+            from `elemental-alloy-308203.supermarket.supermarket`
+            where CUST_CODE is not null)))
+order by cust_code,Thismonth;
+
+
+WITH Cust_Month as (
+select distinct CUST_CODE,Month
+from
+    (select CUST_CODE,DATE_TRUNC(PARSE_DATE('%Y%m%d', CAST(SHOP_DATE AS STRING)),Month) as Month,SHOP_DATE
+    from `elemental-alloy-308203.supermarket.supermarket`
+    where CUST_CODE is not null))
+
+select *,case when (ThisMonth is null) and (PrevMonth is not null) then 'Churn'
+              when (ThisMonth is not null) and (PrevMonth is not null) then 'Repeat'
+              when (ThisMonth is not null) and (PrevMonth is null) and (Prev2Month is not null) then 'Reactivated'
+              when (ThisMonth is not null) and (PrevMonth is null) and (Prev2Month is null) then 'New' end Status
+from(
+        select l.CUST_CODE,l.Month,ThisMonth,lag(ThisMonth) over (partition by l.CUST_CODE order by l.Month asc ) PrevMonth, lag(ThisMonth,2) over (partition by l.CUST_CODE order by l.Month asc ) Prev2Month 
+        from(
+            select a.CUST_CODE,b.Month 
+            from (select distinct CUST_CODE from Cust_Month) a cross join  (select distinct Month  from Cust_Month) b) l
+        left join (
+            select cust_code,Month ThisMonth
+            from(
+                select distinct CUST_CODE,Month
+                from
+                    (select CUST_CODE,DATE_TRUNC(PARSE_DATE('%Y%m%d', CAST(SHOP_DATE AS STRING)),Month) as Month,SHOP_DATE
+                    from `elemental-alloy-308203.supermarket.supermarket`
+                    where CUST_CODE is not null))) r
+        on l.cust_code=r.cust_code and l.Month = r.ThisMonth
+         )
+order by CUST_CODE,Month;

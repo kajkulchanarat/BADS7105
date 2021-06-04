@@ -7,5 +7,7 @@ https://app.powerbi.com/view?r=eyJrIjoiOTZiMjZmOWMtOTNhMS00ZjIyLTk5YzYtY2E4NTkzZ
 ![Slide4](https://user-images.githubusercontent.com/71859613/120456734-147ff780-c3c0-11eb-98dc-a86f0dda6c1a.JPG)
 ![Slide5](https://user-images.githubusercontent.com/71859613/120456738-15188e00-c3c0-11eb-9ff5-dd93ee6c89a2.JPG)
 ![Slide6](https://user-images.githubusercontent.com/71859613/120458890-ddaae100-c3c1-11eb-9881-c87e16f66ae8.JPG)
+![Slide7](https://user-images.githubusercontent.com/71859613/120732620-d4c82580-c50f-11eb-9853-146809ebc809.JPG)
+
 
 
